@@ -449,7 +449,8 @@ type TranslationSet struct {
 	FocusCommandLog                     string
 	CommandLogHeader                    string
 	RandomTip                           string
-	CreatePullRequest                   string
+	CreatePullRequestOptions            string
+	LcCreatePullRequestOptions          string
 	Spans                               Spans
 }
 
@@ -992,7 +993,8 @@ func englishTranslationSet() TranslationSet {
 		FocusCommandLog:                     "Focus command log",
 		CommandLogHeader:                    "You can hide/focus this panel by pressing '%s' or hide it permanently in your config with `gui.showCommandLog: false`\n",
 		RandomTip:                           "Random Tip",
-		CreatePullRequest:                   "Create pull request",
+		CreatePullRequestOptions:            "Create pull request options",
+		LcCreatePullRequestOptions:          "create pull request options",
 		Spans: Spans{
 			// TODO: combine this with the original keybinding descriptions (those are all in lowercase atm)
 			CheckoutCommit:                    "Checkout commit",

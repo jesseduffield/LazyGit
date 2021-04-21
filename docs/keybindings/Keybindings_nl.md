@@ -38,6 +38,7 @@
 <pre>
   <kbd>space</kbd>: uitchecken
   <kbd>o</kbd>: maak een pull-aanvraag
+  <kbd>O</kbd>: maak opties voor pull-aanvragen
   <kbd>ctrl+y</kbd>: kopieer de URL van het pull-verzoek naar het klembord
   <kbd>c</kbd>: uitchecken bij naam
   <kbd>F</kbd>: forceer checkout
