@@ -160,6 +160,7 @@ type KeybindingUniversalConfig struct {
 	DiffingMenu                  string `yaml:"diffingMenu"`
 	DiffingMenuAlt               string `yaml:"diffingMenu-alt"`
 	CopyToClipboard              string `yaml:"copyToClipboard"`
+	OpenRecentRepos              string `yaml:"openRecentRepos"`
 	SubmitEditorText             string `yaml:"submitEditorText"`
 	AppendNewline                string `yaml:"appendNewline"`
 	ExtrasMenu                   string `yaml:"extrasMenu"`
@@ -248,6 +249,9 @@ type KeybindingSubmodulesConfig struct {
 
 // OSConfig contains config on the level of the os
 type OSConfig struct {
+	// EditCommand is the command for editing a file
+	EditCommand string `yaml:"editCommand,omitempty"`
+
 	// OpenCommand is the command for opening a file
 	OpenCommand string `yaml:"openCommand,omitempty"`
 
@@ -373,6 +377,7 @@ func GetDefaultConfig() *UserConfig {
 				New:                          "n",
 				Edit:                         "e",
 				OpenFile:                     "o",
+				OpenRecentRepos:              "<c-r>",
 				ScrollUpMain:                 "<pgup>",
 				ScrollDownMain:               "<pgdown>",
 				ScrollUpMainAlt1:             "K",
