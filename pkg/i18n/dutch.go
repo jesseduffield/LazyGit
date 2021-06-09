@@ -385,7 +385,7 @@ func dutchTranslationSet() TranslationSet {
 		PullRequestURLCopiedToClipboard:     "Pull-aanvraag-URL gekopieerd naar klembord",
 		CommitMessageCopiedToClipboard:      "Commit message gekopieerd naar klembord",
 		LcCopiedToClipboard:                 "gekopieerd naar klembord",
-		CreatePullRequestOptions:            "Creëer pull request opties",
-		LcCreatePullRequestOptions:          "creëer pull request opties",
+		CreatePullRequestOptions:            "Bekijk opties voor pull-aanvraag",
+		LcCreatePullRequestOptions:          "bekijk opties voor pull-aanvraag",
 	}
 }
