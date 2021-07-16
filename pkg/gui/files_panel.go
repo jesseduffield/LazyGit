@@ -473,6 +473,39 @@ func (gui *Gui) handleCommitEditorPress() error {
 	)
 }
 
+func (gui *Gui) handleStatusFilterPressed() error {
+	menuItems := []*menuItem{}
+
+	menuItems = append(menuItems, &menuItem{
+		displayString: gui.Tr.FilterStagedFiles,
+		onPress: func() error {
+			return gui.setStatusFiltering(filetree.DisplayStaged)
+		},
+	})
+
+	menuItems = append(menuItems, &menuItem{
+		displayString: gui.Tr.FilterUnstagedFiles,
+		onPress: func() error {
+			return gui.setStatusFiltering(filetree.DisplayUnstaged)
+		},
+	})
+
+	menuItems = append(menuItems, &menuItem{
+		displayString: gui.Tr.ResetCommitFilterState,
+		onPress: func() error {
+			return gui.setStatusFiltering(filetree.DisplayAll)
+		},
+	})
+
+	return gui.createMenu(gui.Tr.FilteringMenuTitle, menuItems, createMenuOptions{showCancel: false})
+}
+
+func (gui *Gui) setStatusFiltering(filter filetree.FileManagerDisplayFilter) error {
+	state := gui.State
+	state.FileManager.SetDisplayFilter(filter)
+	return gui.handleRefreshFiles()
+}
+
 func (gui *Gui) editFile(filename string) error {
 	cmdStr, err := gui.GitCommand.EditFileCmdStr(filename)
 	if err != nil {
