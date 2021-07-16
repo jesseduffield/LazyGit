@@ -11,8 +11,9 @@ import (
 
 // Service is a service that repository is on (Github, Bitbucket, ...)
 type Service struct {
-	Name           string
-	PullRequestURL string
+	Name                            string
+	pullRequestURLIntoDefaultBranch func(owner string, repository string, from string) string
+	pullRequestURLIntoTargetBranch func(owner string, repository string, from string, to string) string
 }
 
 // PullRequest opens a link in browser to create new pull request
@@ -35,22 +36,45 @@ func NewService(typeName string, repositoryDomain string, siteDomain string) *Se
 	switch typeName {
 	case "github":
 		service = &Service{
-			Name:           repositoryDomain,
-			PullRequestURL: fmt.Sprintf("https://%s%s", siteDomain, "/%s/%s/compare/%s?expand=1"),
+			Name: repositoryDomain,
+			pullRequestURLIntoDefaultBranch: func(owner string, repository string, from string) string {
+				return fmt.Sprintf("https://%s/%s/%s/compare/%s?expand=1", siteDomain, owner, repository, from)
+			},
+			pullRequestURLIntoTargetBranch: func(owner string, repository string, from string, to string) string {
+				return fmt.Sprintf("https://%s/%s/%s/compare/%s...%s?expand=1", siteDomain, owner, repository, to, from)
+			},
 		}
 	case "bitbucket":
 		service = &Service{
-			Name:           repositoryDomain,
-			PullRequestURL: fmt.Sprintf("https://%s%s", siteDomain, "/%s/%s/pull-requests/new?source=%s&t=1"),
+			Name: repositoryDomain,
+			pullRequestURLIntoDefaultBranch: func(owner string, repository string, from string) string {
+				return fmt.Sprintf("https://%s/%s/%s/pull-requests/new?source=%s&t=1", siteDomain, owner, repository, from)
+			},
+			pullRequestURLIntoTargetBranch: func(owner string, repository string, from string, to string) string {
+				return fmt.Sprintf("https://%s/%s/%s/pull-requests/new?source=%s&dest=%s&t=1", siteDomain, owner, repository, from, to)
+			},
 		}
 	case "gitlab":
 		service = &Service{
-			Name:           repositoryDomain,
-			PullRequestURL: fmt.Sprintf("https://%s%s", siteDomain, "/%s/%s/merge_requests/new?merge_request[source_branch]=%s"),
+			Name: repositoryDomain,
+			pullRequestURLIntoDefaultBranch: func(owner string, repository string, from string) string {
+				return fmt.Sprintf("https://%s/%s/%s/merge_requests/new?merge_request[source_branch]=%s", siteDomain, owner, repository, from)
+			},
+			pullRequestURLIntoTargetBranch: func(owner string, repository string, from string, to string) string {
+				return fmt.Sprintf("https://%s/%s/%s/merge_requests/new?merge_request[source_branch]=%s&merge_request[target_branch]=%s", siteDomain, owner, repository, from, to)
+			},
 		}
 	}
 
 	return service
+}
+
+func (s *Service) PullRequestURL(owner string, repository string, from string, to string) string {
+	if to == "" {
+		return s.pullRequestURLIntoDefaultBranch(owner, repository, from)
+	} else {
+		return s.pullRequestURLIntoTargetBranch(owner, repository, from, to)
+	}
 }
 
 func getServices(config config.AppConfigurer) []*Service {
@@ -90,8 +114,8 @@ func NewPullRequest(gitCommand *GitCommand) *PullRequest {
 }
 
 // Create opens link to new pull request in browser
-func (pr *PullRequest) Create(branch *models.Branch) (string, error) {
-	pullRequestURL, err := pr.getPullRequestURL(branch)
+func (pr *PullRequest) Create(from *models.Branch, to *models.Branch) (string, error) {
+	pullRequestURL, err := pr.getPullRequestURL(from, to)
 	if err != nil {
 		return "", err
 	}
@@ -100,8 +124,8 @@ func (pr *PullRequest) Create(branch *models.Branch) (string, error) {
 }
 
 // CopyURL copies the pull request URL to the clipboard
-func (pr *PullRequest) CopyURL(branch *models.Branch) (string, error) {
-	pullRequestURL, err := pr.getPullRequestURL(branch)
+func (pr *PullRequest) CopyURL(from *models.Branch, to *models.Branch) (string, error) {
+	pullRequestURL, err := pr.getPullRequestURL(from, to)
 	if err != nil {
 		return "", err
 	}
@@ -109,8 +133,8 @@ func (pr *PullRequest) CopyURL(branch *models.Branch) (string, error) {
 	return pullRequestURL, pr.GitCommand.OSCommand.CopyToClipboard(pullRequestURL)
 }
 
-func (pr *PullRequest) getPullRequestURL(branch *models.Branch) (string, error) {
-	branchExistsOnRemote := pr.GitCommand.CheckRemoteBranchExists(branch)
+func (pr *PullRequest) getPullRequestURL(from *models.Branch, to *models.Branch) (string, error) {
+	branchExistsOnRemote := pr.GitCommand.CheckRemoteBranchExists(from)
 
 	if !branchExistsOnRemote {
 		return "", errors.New(pr.GitCommand.Tr.NoBranchOnRemote)
@@ -131,9 +155,11 @@ func (pr *PullRequest) getPullRequestURL(branch *models.Branch) (string, error) 
 	}
 
 	repoInfo := getRepoInfoFromURL(repoURL)
-	pullRequestURL := fmt.Sprintf(
-		gitService.PullRequestURL, repoInfo.Owner, repoInfo.Repository, branch.Name,
-	)
+	toBranchName := ""
+	if to != nil {
+		toBranchName = to.Name
+	}
+	pullRequestURL := gitService.PullRequestURL(repoInfo.Owner, repoInfo.Repository, from.Name, toBranchName)
 
 	return pullRequestURL, nil
 }

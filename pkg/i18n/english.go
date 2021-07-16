@@ -450,6 +450,8 @@ type TranslationSet struct {
 	FocusCommandLog                     string
 	CommandLogHeader                    string
 	RandomTip                           string
+	CreatePullRequestOptions            string
+	LcCreatePullRequestOptions          string
 	SelectParentCommitForMerge          string
 	ToggleWhitespaceInDiffView          string
 	IgnoringWhitespaceInDiffView        string
@@ -997,6 +999,8 @@ func englishTranslationSet() TranslationSet {
 		FocusCommandLog:                     "Focus command log",
 		CommandLogHeader:                    "You can hide/focus this panel by pressing '%s' or hide it permanently in your config with `gui.showCommandLog: false`\n",
 		RandomTip:                           "Random Tip",
+		CreatePullRequestOptions:            "Create pull request options",
+		LcCreatePullRequestOptions:          "create pull request options",
 		SelectParentCommitForMerge:          "Select parent commit for merge",
 		ToggleWhitespaceInDiffView:          "Toggle whether or not whitespace changes are shown in the diff view",
 		IgnoringWhitespaceInDiffView:        "Whitespace will be ignored in the diff view",

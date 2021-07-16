@@ -548,6 +548,14 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 		{
 			ViewName:    "branches",
 			Contexts:    []string{string(LOCAL_BRANCHES_CONTEXT_KEY)},
+			Key:         gui.getKey(config.Branches.ViewPullRequestOptions),
+			Handler:     gui.handleCreatePullRequestMenu,
+			Description: gui.Tr.LcCreatePullRequestOptions,
+			OpensMenu:   true,
+		},
+		{
+			ViewName:    "branches",
+			Contexts:    []string{string(LOCAL_BRANCHES_CONTEXT_KEY)},
 			Key:         gui.getKey(config.Branches.CopyPullRequestURL),
 			Handler:     gui.handleCopyPullRequestURLPress,
 			Description: gui.Tr.LcCopyPullRequestURL,
