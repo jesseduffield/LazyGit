@@ -1,8 +1,13 @@
 package gui
 
 import (
+	"bytes"
+	"errors"
 	"log"
+	"regexp"
+	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/fatih/color"
 	"github.com/jesseduffield/gocui"
@@ -153,8 +158,83 @@ func (gui *Gui) handleCustomCommandKeybinding(customCommand config.CustomCommand
 
 					return gui.createMenu(title, menuItems, createMenuOptions{showCancel: true})
 				}
+			case "menuFromCommand":
+				f = func() error {
+					// Collect cmd to run from config
+					cmdStr, err := gui.resolveTemplate(prompt.Command, promptResponses)
+					if err != nil {
+						return gui.surfaceError(err)
+					}
+
+					// Collect Filter regexp
+					filter, err := gui.resolveTemplate(prompt.Filter, promptResponses)
+					if err != nil {
+						return gui.surfaceError(err)
+					}
+					reg, err := regexp.Compile(filter)
+					if err != nil {
+						return gui.surfaceError(errors.New("unable to parse filter regex, error: " + err.Error()))
+					}
+
+					// Run and save output
+					message, err := gui.GitCommand.RunCommandWithOutput(cmdStr)
+					if err != nil {
+						return gui.surfaceError(err)
+					}
+
+					// Need to make a menu out of what the cmd has displayed
+					candidates := []string{}
+					buff := bytes.NewBuffer(nil)
+					temp, err := template.New("format").Parse(prompt.Format)
+					if err != nil {
+						return gui.surfaceError(errors.New("unable to parse format, error: " + err.Error()))
+					}
+					for _, str := range strings.Split(string(message), "\n") {
+						if str == "" {
+							continue
+						}
+						tmplData := map[string]string{}
+						out := reg.FindAllStringSubmatch(str, -1)
+						if len(out) > 0 {
+							for groupIdx, group := range reg.SubexpNames() {
+								// Record matched group with group ids
+								matchName := "group_" + strconv.Itoa(groupIdx)
+								tmplData[matchName] = group
+								// Record last named group non-empty matches as group matches
+								if group != "" {
+									tmplData[group] = out[0][idx]
+								}
+							}
+						}
+						err = temp.Execute(buff, tmplData)
+						if err != nil {
+							return gui.surfaceError(err)
+						}
+
+						candidates = append(candidates, strings.TrimSpace(buff.String()))
+						buff.Reset()
+					}
+
+					menuItems := make([]*menuItem, len(candidates))
+					for i := range candidates {
+						menuItems[i] = &menuItem{
+							displayStrings: []string{candidates[i]},
+							onPress: func() error {
+								promptResponses[idx] = candidates[i]
+								return wrappedF()
+							},
+						}
+					}
+
+					title, err := gui.resolveTemplate(prompt.Title, promptResponses)
+					if err != nil {
+						return gui.surfaceError(err)
+					}
+
+					return gui.createMenu(title, menuItems, createMenuOptions{showCancel: true})
+				}
 			default:
-				return gui.createErrorPanel("custom command prompt must have a type of 'input' or 'menu'")
+				return gui.createErrorPanel("custom command prompt must have a type of 'input', 'menu' or 'menuFromCommand'")
 			}
 
 		}
